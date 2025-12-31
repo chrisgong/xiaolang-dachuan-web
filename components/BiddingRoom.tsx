@@ -46,16 +46,19 @@ const BiddingRoom: React.FC<Props> = ({ request, existingBids, biddingDone, onSe
 
   useEffect(() => {
     if (!biddingDone) {
+      // 提速反馈循环：由 3s 减为 1.5s
       const msgTimer = setInterval(() => {
         setFeedbackIndex(prev => (prev + 1) % feedbackMessages.length);
-      }, 3000);
+      }, 1500);
+      // 提速系统日志滚动：由 1.2s 减为 0.8s
       const logTimer = setInterval(() => {
         setLogIndex(prev => (prev + 1) % systemLogs.length);
-      }, 1200);
+      }, 800);
 
+      // 提速头部自动收起：由 3s 减为 1.2s，让用户尽快看到内容
       const collapseTimer = setTimeout(() => {
         setIsHeaderCollapsed(true);
-      }, 3000);
+      }, 1200);
 
       return () => {
         clearInterval(msgTimer);
@@ -70,7 +73,7 @@ const BiddingRoom: React.FC<Props> = ({ request, existingBids, biddingDone, onSe
   const getRouteTitle = (bid: CaptainBid) => {
     const info = bid.routeInfo;
     if (info?.destination && info?.targetFish) {
-      return `${info.destination}钓${info.targetFish}线`;
+      return `${info.destination}钓${info.targetFish}`;
     }
     if (info?.name && info.name.length < 20) return info.name;
     return "定制海钓方案";

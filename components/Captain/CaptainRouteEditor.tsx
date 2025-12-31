@@ -10,37 +10,21 @@ interface Boat {
   specs: string;
   refSharePrice: number;
   refCharterPrice: number;
-  config: string;
 }
 
 const MOCK_BOATS: Boat[] = [
-  {
-    id: 'boat-1',
-    name: '海狼 Pro-42',
-    image: STATIC_ASSETS.BOAT_FAR,
-    specs: '42尺双发专业深海快艇',
-    refSharePrice: 1200,
-    refCharterPrice: 5800,
-    config: '1200HP / 探鱼雷达 / 电绞支架'
-  },
-  {
-    id: 'boat-2',
-    name: '极光号路亚',
-    image: STATIC_ASSETS.BOAT_NEAR,
-    specs: '32尺精品路亚快艇',
-    refSharePrice: 480,
-    refCharterPrice: 2800,
-    config: '300HP / 顶流机 / 16轴竿架'
-  },
-  {
-    id: 'boat-3',
-    name: '逐浪游艇号',
-    image: STATIC_ASSETS.LUYA_BOAT,
-    specs: '48尺豪华双层观光游艇',
-    refSharePrice: 1500,
-    refCharterPrice: 8800,
-    config: '飞桥控制 / KTV内舱 / 淋浴'
-  }
+  { id: 'boat-1', name: '海狼 Pro-42', image: STATIC_ASSETS.BOAT_FAR, specs: '42尺双发专业深海快艇', refSharePrice: 1200, refCharterPrice: 5800 },
+  { id: 'boat-2', name: '极光号路亚', image: STATIC_ASSETS.BOAT_NEAR, specs: '32尺精品路亚快艇', refSharePrice: 480, refCharterPrice: 2800 },
+];
+
+const SERVICE_OPTIONS = [
+  { id: 'gear', label: '渔具', icon: '🎣' },
+  { id: 'bait', label: '鱼饵', icon: '🧊' },
+  { id: 'insurance', label: '保险', icon: '🛡️' },
+  { id: 'drinks', label: '饮水', icon: '🥤' },
+  { id: 'guide', label: '向导', icon: '👨‍🏫' },
+  { id: 'media', label: '拍摄', icon: '📸' },
+  { id: 'other', label: '其他', icon: '✨' },
 ];
 
 interface Props {
@@ -49,55 +33,36 @@ interface Props {
   onBack: () => void;
 }
 
-const SERVICE_OPTIONS = [
-  { id: 'gear', label: '渔具租赁', icon: '🎣' },
-  { id: 'bait', label: '活饵供应', icon: '🧊' },
-  { id: 'insurance', label: '出海保险', icon: '🛡️' },
-  { id: 'drinks', label: '矿泉零食', icon: '🥤' },
-  { id: 'guide', label: '专业指导', icon: '👨‍🏫' },
-  { id: 'media', label: '战果拍摄', icon: '📸' },
-  { id: 'other', label: '其他定制', icon: '➕' },
-];
-
 const CaptainRouteEditor: React.FC<Props> = ({ initialRoute, onSave, onBack }) => {
-  const [selectedBoat, setSelectedBoat] = useState<Boat>(MOCK_BOATS[0]);
-  const [showBoatPicker, setShowBoatPicker] = useState(false);
-
   const [route, setRoute] = useState<RoutePreset>(initialRoute || {
     id: 'route-' + Date.now(),
     name: '', 
     description: '',
     oceanType: 'NEAR',
     destination: '',
+    targetFish: '',
     fishingSet: '',
     gearIncluded: '',
     baitIncluded: '',
     otherItems: '', 
-    sharePrice: MOCK_BOATS[0].refSharePrice,
-    charterPrice: MOCK_BOATS[0].refCharterPrice,
+    sharePrice: 0,
+    charterPrice: 0,
     includedServices: ['gear', 'bait', 'insurance'],
-    customService: '',
-    targetFish: ''
   });
 
-  // 标题即时预览逻辑
+  const [activeBoat, setActiveBoat] = useState<Boat>(MOCK_BOATS[0]);
+  const [showBoatPicker, setShowBoatPicker] = useState(false);
+
   const generatedName = (route.destination && route.targetFish) 
-    ? `${route.destination}钓${route.targetFish}线` 
+    ? `${route.destination}钓${route.targetFish}` 
     : '';
 
   const handleSave = () => {
     if (!route.destination.trim() || !route.targetFish?.trim()) {
-      alert("请填写目标钓点和主攻鱼种，我们将为您自动生成方案标题");
+      alert("请填写目标钓点和主攻鱼种");
       return;
     }
-    
-    // 合成最终方案名称
-    const finalRoute = {
-      ...route,
-      name: generatedName
-    };
-    
-    onSave(finalRoute);
+    onSave({ ...route, name: generatedName });
   };
 
   const toggleService = (id: string) => {
@@ -109,291 +74,271 @@ const CaptainRouteEditor: React.FC<Props> = ({ initialRoute, onSave, onBack }) =
     }));
   };
 
-  const handleSelectBoat = (boat: Boat) => {
-    setSelectedBoat(boat);
-    setRoute(prev => ({
-      ...prev,
-      sharePrice: boat.refSharePrice,
-      charterPrice: boat.refCharterPrice
-    }));
-    setShowBoatPicker(false);
-  };
-
   return (
-    <div className="flex flex-col h-full bg-slate-950">
-      {/* 顶部标题栏 */}
-      <div className="p-6 bg-slate-900 border-b border-slate-800 flex items-center shrink-0 z-30 shadow-2xl">
-        <button onClick={onBack} className="p-2 -ml-2 text-slate-500 hover:text-white transition-colors">
+    <div className="flex flex-col h-full bg-slate-950 text-slate-200">
+      {/* Header */}
+      <div className="px-6 pt-12 pb-6 flex items-center justify-between bg-slate-900/80 backdrop-blur-xl sticky top-0 z-50 border-b border-slate-800">
+        <button onClick={onBack} className="p-2 -ml-2 text-slate-400 hover:text-white transition-colors">
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" /></svg>
         </button>
-        <div className="flex-1 text-center">
-          <h2 className="font-black text-lg text-white italic tracking-tighter uppercase leading-none">发布 <span className="text-blue-400">海钓方案</span></h2>
-          <p className="text-[8px] text-slate-500 font-bold uppercase tracking-[0.2em] mt-1 italic">Vessel Route Design</p>
+        <div className="text-center">
+          <h2 className="text-sm font-black italic tracking-widest uppercase">发布 <span className="text-blue-500">海钓方案</span></h2>
+          <p className="text-[8px] text-slate-600 font-bold uppercase tracking-[0.2em] mt-0.5 italic">Professional Studio</p>
         </div>
-        <div className="w-8"></div>
+        <button onClick={handleSave} className="text-xs font-black text-blue-500 uppercase italic tracking-tighter hover:text-blue-400">完成发布</button>
       </div>
 
       <div className="flex-1 overflow-y-auto p-6 space-y-10 no-scrollbar pb-44">
         
-        {/* Card 1: 核心产品定位 (必填) */}
+        {/* Card 1: 核心航行定位 */}
         <section className="space-y-4">
-          <div className="flex items-center justify-between px-1">
-            <h3 className="text-[11px] text-slate-500 font-black uppercase tracking-widest italic flex items-center">
-              <span className="w-4 h-4 rounded-full bg-blue-600 text-white flex items-center justify-center text-[8px] not-italic mr-2">1</span>
-              核心航行定位 / Core Setup
-            </h3>
-            <span className="text-[8px] text-blue-500 font-black uppercase bg-blue-500/10 px-2 py-0.5 rounded">必填项</span>
-          </div>
-          <div className="bg-slate-900 border border-slate-800 rounded-[32px] p-6 space-y-6 shadow-xl">
-            {/* 远近海切换 */}
-            <div className="space-y-3">
-              <div className="flex p-1 bg-slate-950 rounded-2xl border border-slate-800">
-                <button onClick={() => setRoute({...route, oceanType: 'NEAR'})} className={`flex-1 py-3 rounded-xl text-[10px] font-black transition-all ${route.oceanType === 'NEAR' ? 'bg-emerald-500 text-white shadow-lg' : 'text-slate-600'}`}>近海线路 (NEAR)</button>
-                <button onClick={() => setRoute({...route, oceanType: 'FAR'})} className={`flex-1 py-3 rounded-xl text-[10px] font-black transition-all ${route.oceanType === 'FAR' ? 'bg-indigo-500 text-white shadow-lg' : 'text-slate-600'}`}>远海线路 (FAR)</button>
+           <div className="flex items-center justify-between px-1">
+              <h3 className="text-[10px] text-slate-500 font-black uppercase tracking-widest italic flex items-center">
+                 <span className="w-1.5 h-1.5 rounded-full bg-blue-500 mr-2 shadow-[0_0_8px_rgba(59,130,246,0.6)]"></span>
+                 航线基础定位 / Identity
+              </h3>
+              <span className="text-[8px] text-blue-500/50 font-black uppercase tracking-tighter italic">Step 01</span>
+           </div>
+
+           <div className="bg-slate-900 border border-slate-800 rounded-[32px] p-6 space-y-6 shadow-2xl relative overflow-hidden">
+              <div className="flex p-1 bg-slate-950 rounded-2xl border border-slate-800 relative z-10">
+                <button onClick={() => setRoute({...route, oceanType: 'NEAR'})} className={`flex-1 py-3 rounded-xl text-[10px] font-black transition-all ${route.oceanType === 'NEAR' ? 'bg-emerald-500 text-white shadow-lg' : 'text-slate-600'}`}>近海线路</button>
+                <button onClick={() => setRoute({...route, oceanType: 'FAR'})} className={`flex-1 py-3 rounded-xl text-[10px] font-black transition-all ${route.oceanType === 'FAR' ? 'bg-indigo-500 text-white shadow-lg' : 'text-slate-600'}`}>远海航线</button>
               </div>
-            </div>
 
-            {/* 目标钓点 (必填) */}
-            <div className="space-y-2">
-              <label className="text-[9px] text-slate-700 font-black uppercase ml-1 italic tracking-widest">目标钓点 (必填)</label>
-              <input 
-                value={route.destination}
-                onChange={e => setRoute({...route, destination: e.target.value})}
-                placeholder="如：西鼓岛沉船区、七洲列岛"
-                className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-sm font-black text-white outline-none focus:border-blue-500 transition-all shadow-inner placeholder:text-slate-800"
-              />
-            </div>
-
-            {/* 主攻鱼种 (必填) */}
-            <div className="space-y-2">
-              <label className="text-[9px] text-slate-700 font-black uppercase ml-1 italic tracking-widest">主攻鱼种 (必填)</label>
-              <input 
-                value={route.targetFish}
-                onChange={e => setRoute({...route, targetFish: e.target.value})}
-                placeholder="如：章红、金枪、大石斑"
-                className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-sm font-black text-white outline-none focus:border-blue-500 transition-all shadow-inner placeholder:text-slate-800"
-              />
-            </div>
-
-            {/* 方案名称预览 (自动生成) */}
-            {generatedName && (
-              <div className="pt-2 border-t border-slate-800 animate-in fade-in slide-in-from-top-1">
-                <p className="text-[8px] text-slate-600 font-black uppercase tracking-widest mb-2 italic">预览方案标题 (钓友可见)</p>
-                <div className="bg-blue-600/5 border border-blue-500/20 rounded-xl p-3">
-                   <p className="text-sm font-black text-blue-400 italic">“{generatedName}”</p>
-                </div>
-              </div>
-            )}
-          </div>
-        </section>
-
-        {/* Card 2: 船只与价格 (商业核心) */}
-        <section className="space-y-4">
-          <div className="flex items-center justify-between px-1">
-            <h3 className="text-[11px] text-slate-500 font-black uppercase tracking-widest italic flex items-center">
-              <span className="w-4 h-4 rounded-full bg-slate-800 text-slate-500 flex items-center justify-center text-[8px] not-italic mr-2">2</span>
-              执行船只与定价 / Vessel & Price
-            </h3>
-          </div>
-          
-          <div className="space-y-4">
-             {/* 船只选择入口 */}
-             <button 
-                onClick={() => setShowBoatPicker(true)}
-                className="w-full bg-slate-900 border border-slate-800 rounded-[28px] p-4 flex items-center justify-between group active:scale-[0.98] transition-all"
-             >
-                <div className="flex items-center space-x-4">
-                   <div className="w-14 h-10 rounded-lg overflow-hidden border border-slate-800 shrink-0">
-                      <img src={selectedBoat.image} className="w-full h-full object-cover" alt="Vessel" />
-                   </div>
-                   <div className="text-left">
-                      <p className="text-xs font-black text-white italic">{selectedBoat.name}</p>
-                      <p className="text-[8px] text-slate-600 font-bold uppercase tracking-tighter mt-0.5">{selectedBoat.specs}</p>
-                   </div>
-                </div>
-                <div className="text-blue-500 flex items-center space-x-1">
-                   <span className="text-[9px] font-black italic underline underline-offset-4">切换</span>
-                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" strokeWidth="3" strokeLinecap="round"/></svg>
-                </div>
-             </button>
-
-             {/* 定价输入区 */}
-             <div className="bg-slate-900 border border-slate-800 rounded-[32px] p-6 grid grid-cols-2 gap-4 shadow-2xl">
-                <div className="space-y-2">
-                  <label className="text-[8px] text-slate-600 font-black ml-1 uppercase tracking-widest leading-none">拼船人均价</label>
-                  <div className="flex items-center bg-slate-950 rounded-2xl p-4 border border-slate-800 focus-within:border-blue-500 transition-all">
-                    <span className="text-slate-600 font-black mr-1 text-[10px] italic">¥</span>
+              <div className="grid gap-5 relative z-10">
+                 <div className="space-y-2">
+                    <label className="text-[9px] text-slate-600 font-black uppercase ml-1 italic tracking-widest leading-none">目标钓点</label>
                     <input 
-                       type="number" 
-                       value={route.sharePrice || ''} 
-                       onChange={e => setRoute({...route, sharePrice: parseFloat(e.target.value) || 0})} 
-                       placeholder="0" 
-                       className="bg-transparent w-full outline-none text-white font-black text-xl font-mono italic" 
+                      value={route.destination}
+                      onChange={e => setRoute({...route, destination: e.target.value})}
+                      placeholder="手动输入钓点名称"
+                      className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-sm font-black text-white outline-none focus:border-blue-500 transition-all shadow-inner"
                     />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[8px] text-slate-600 font-black ml-1 uppercase tracking-widest leading-none">包船一口价</label>
-                  <div className="flex items-center bg-slate-950 rounded-2xl p-4 border border-slate-800 focus-within:border-blue-500 transition-all">
-                    <span className="text-slate-600 font-black mr-1 text-[10px] italic">¥</span>
+                 </div>
+
+                 <div className="space-y-2">
+                    <label className="text-[9px] text-slate-600 font-black uppercase ml-1 italic tracking-widest leading-none">主攻鱼种</label>
                     <input 
-                       type="number" 
-                       value={route.charterPrice || ''} 
-                       onChange={e => setRoute({...route, charterPrice: parseFloat(e.target.value) || 0})} 
-                       placeholder="0" 
-                       className="bg-transparent w-full outline-none text-white font-black text-xl font-mono italic" 
+                      value={route.targetFish}
+                      onChange={e => setRoute({...route, targetFish: e.target.value})}
+                      placeholder="手动输入主攻鱼类"
+                      className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-sm font-black text-white outline-none focus:border-blue-500 transition-all shadow-inner"
                     />
-                  </div>
+                 </div>
+              </div>
+
+              {generatedName && (
+                <div className="pt-4 border-t border-slate-800/50">
+                   <p className="text-[8px] text-slate-600 font-black uppercase mb-1 tracking-widest">方案名称预览</p>
+                   <p className="text-xl font-black italic text-blue-400">“{generatedName}”</p>
                 </div>
-             </div>
-          </div>
+              )}
+           </div>
         </section>
 
-        {/* Card 3: 包含服务 (选填) */}
+        {/* Card 2: 经营定价 */}
         <section className="space-y-4">
-          <div className="flex items-center justify-between px-1">
-            <h3 className="text-[11px] text-slate-500 font-black uppercase tracking-widest italic flex items-center">
-              <span className="w-4 h-4 rounded-full bg-slate-800 text-slate-500 flex items-center justify-center text-[8px] not-italic mr-2">3</span>
-              包含服务内容 / Services
-            </h3>
-            <span className="text-[8px] text-slate-700 font-black uppercase tracking-widest">Optional</span>
-          </div>
+           <div className="flex items-center justify-between px-1">
+              <h3 className="text-[10px] text-slate-500 font-black uppercase tracking-widest italic flex items-center">
+                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-2 shadow-[0_0_8px_rgba(16,185,129,0.6)]"></span>
+                 价格与执航船只 / Business
+              </h3>
+              <span className="text-[8px] text-emerald-500/50 font-black uppercase tracking-tighter italic">Step 02</span>
+           </div>
 
-          <div className="bg-slate-900 border border-slate-800 rounded-[32px] p-6 space-y-6 shadow-xl">
-            <div className="grid grid-cols-4 gap-2">
-              {SERVICE_OPTIONS.map(opt => (
-                <button 
-                  key={opt.id}
-                  onClick={() => toggleService(opt.id)}
-                  className={`flex flex-col items-center justify-center p-3 rounded-2xl border transition-all ${
-                    route.includedServices.includes(opt.id) 
-                    ? 'bg-blue-600 border-blue-500 text-white shadow-lg' 
-                    : 'bg-slate-950 border-slate-800 text-slate-700'
-                  }`}
-                >
-                  <span className="text-base mb-1">{opt.icon}</span>
-                  <span className="text-[7px] font-black uppercase tracking-tighter whitespace-nowrap">{opt.label}</span>
-                </button>
-              ))}
-            </div>
+           <div className="bg-slate-900 border border-slate-800 rounded-[32px] overflow-hidden shadow-2xl">
+              <button onClick={() => setShowBoatPicker(true)} className="w-full p-6 flex items-center justify-between border-b border-slate-800 hover:bg-slate-800/50 transition-colors">
+                 <div className="flex items-center space-x-4 text-left">
+                    <div className="w-16 h-12 bg-slate-950 rounded-xl overflow-hidden border border-slate-800">
+                       <img src={activeBoat.image} className="w-full h-full object-cover" alt="Boat" />
+                    </div>
+                    <div>
+                       <p className="text-xs font-black text-white italic">{activeBoat.name}</p>
+                       <p className="text-[9px] text-slate-600 font-bold uppercase mt-1">{activeBoat.specs}</p>
+                    </div>
+                 </div>
+                 <div className="bg-blue-600/10 text-blue-400 px-3 py-1.5 rounded-lg border border-blue-500/20 text-[9px] font-black italic uppercase">切换</div>
+              </button>
 
-            {route.includedServices.includes('other') && (
-              <div className="animate-in slide-in-from-top-2 duration-300">
-                <input 
-                  value={route.customService}
-                  onChange={e => setRoute({...route, customService: e.target.value})}
-                  placeholder="请输入其它定制服务项..."
-                  className="w-full bg-slate-950 border border-blue-500/40 rounded-2xl p-4 text-xs font-bold text-blue-100 outline-none focus:border-blue-500 shadow-inner"
-                />
+              <div className="p-8 space-y-6 bg-slate-900/40">
+                 <div className="grid grid-cols-2 gap-6">
+                    <div className="space-y-3">
+                       <label className="text-[9px] text-slate-600 font-black uppercase ml-1 italic tracking-widest">拼船均价</label>
+                       <div className="relative">
+                          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-700 font-black italic text-sm">¥</span>
+                          <input 
+                            type="number" 
+                            value={route.sharePrice || ''}
+                            onChange={e => setRoute({...route, sharePrice: parseInt(e.target.value) || 0})}
+                            placeholder="0"
+                            className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 pl-8 text-sm font-black text-white outline-none focus:border-emerald-500 transition-all shadow-inner font-mono italic"
+                          />
+                       </div>
+                    </div>
+                    <div className="space-y-3">
+                       <label className="text-[9px] text-slate-600 font-black uppercase ml-1 italic tracking-widest">包船总价</label>
+                       <div className="relative">
+                          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-700 font-black italic text-sm">¥</span>
+                          <input 
+                            type="number" 
+                            value={route.charterPrice || ''}
+                            onChange={e => setRoute({...route, charterPrice: parseInt(e.target.value) || 0})}
+                            placeholder="0"
+                            className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 pl-8 text-sm font-black text-white outline-none focus:border-blue-500 transition-all shadow-inner font-mono italic"
+                          />
+                       </div>
+                    </div>
+                 </div>
               </div>
-            )}
-          </div>
+           </div>
         </section>
 
-        {/* Card 4: 装备建议 (选填) */}
+        {/* Card 3: 全景执行服务包 - 调整顺序：服务 > 装备 > 亮点 */}
         <section className="space-y-4">
-          <div className="flex items-center justify-between px-1">
-            <h3 className="text-[11px] text-slate-500 font-black uppercase tracking-widest italic flex items-center">
-              <span className="w-4 h-4 rounded-full bg-slate-800 text-slate-500 flex items-center justify-center text-[8px] not-italic mr-2">4</span>
-              专业装备建议 / Gear Advice
-            </h3>
-            <span className="text-[8px] text-slate-700 font-black uppercase tracking-widest">Professional</span>
-          </div>
+           <div className="flex items-center justify-between px-1">
+              <h3 className="text-[10px] text-slate-500 font-black uppercase tracking-widest italic flex items-center">
+                 <span className="w-1.5 h-1.5 rounded-full bg-orange-500 mr-2 shadow-[0_0_8px_rgba(249,115,22,0.6)]"></span>
+                 全景服务包 / Execution Pack
+              </h3>
+              <span className="text-[8px] text-orange-500/50 font-black uppercase tracking-tighter italic">Step 03</span>
+           </div>
 
-          <div className="bg-slate-900 border border-slate-800 rounded-[32px] p-6 space-y-5 shadow-xl">
-            <div className="grid gap-4">
-              <div className="space-y-2">
-                <label className="text-[9px] text-slate-700 font-black uppercase ml-1 italic tracking-widest leading-none">建议杆轮型号</label>
-                <input 
-                  value={route.gearIncluded} 
-                  onChange={e => setRoute({...route, gearIncluded: e.target.value})} 
-                  placeholder="如：禧玛诺电绞、2000型以上水滴轮..." 
-                  className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-[11px] text-slate-300 outline-none focus:border-blue-500/50" 
-                />
+           <div className="bg-slate-900 border border-slate-800 rounded-[40px] p-8 space-y-10 shadow-2xl relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-40 h-40 bg-orange-500/5 rounded-full blur-3xl -mr-20 -mt-20"></div>
+
+              {/* 1. 包含服务 (Services) - 最重要，第一位置 */}
+              <div className="relative z-10 space-y-4">
+                 <label className="text-[9px] text-slate-500 font-black uppercase tracking-widest italic leading-none flex items-center">
+                    <span className="w-1.5 h-1.5 bg-blue-500 rounded-full mr-2 shadow-[0_0_8px_rgba(59,130,246,0.6)]"></span>
+                    核心服务项 / Included Services
+                 </label>
+                 <div className="grid grid-cols-4 gap-2">
+                    {SERVICE_OPTIONS.map(opt => (
+                      <button 
+                        key={opt.id}
+                        onClick={() => toggleService(opt.id)}
+                        className={`flex flex-col items-center justify-center p-3 rounded-2xl border transition-all ${
+                          route.includedServices.includes(opt.id) 
+                          ? 'bg-blue-600 border-blue-500 text-white shadow-lg' 
+                          : 'bg-slate-950 border-slate-800 text-slate-700'
+                        }`}
+                      >
+                        <span className="text-base mb-1">{opt.icon}</span>
+                        <span className="text-[7px] font-black uppercase tracking-tighter whitespace-nowrap">{opt.label}</span>
+                      </button>
+                    ))}
+                 </div>
+                 {route.includedServices.includes('other') && (
+                    <input 
+                      value={route.customService || ''}
+                      onChange={e => setRoute({...route, customService: e.target.value})}
+                      placeholder="输入其他定制服务内容..."
+                      className="w-full mt-2 bg-slate-950 border border-blue-500/30 rounded-xl p-3 text-[10px] font-bold text-blue-100 outline-none focus:border-blue-500 shadow-inner"
+                    />
+                 )}
               </div>
-              <div className="space-y-2">
-                <label className="text-[9px] text-slate-700 font-black uppercase ml-1 italic tracking-widest leading-none">建议线组规格</label>
-                <input 
-                  value={route.fishingSet} 
-                  onChange={e => setRoute({...route, fishingSet: e.target.value})} 
-                  placeholder="如：PE 6-8号线, 300g铁板..." 
-                  className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-[11px] text-slate-300 outline-none focus:border-blue-500/50" 
-                />
+
+              {/* 2. 专业装备建议 (Gear Advices) - 第二位置 */}
+              <div className="relative z-10 pt-8 border-t border-slate-800/50 space-y-5">
+                 <label className="text-[9px] text-slate-500 font-black uppercase tracking-widest italic leading-none flex items-center justify-between">
+                    <span className="flex items-center">
+                       <span className="w-1.5 h-1.5 bg-orange-500 rounded-full mr-2 shadow-[0_0_8px_rgba(249,115,22,0.6)]"></span>
+                       专业装备建议 / Gear Advices
+                    </span>
+                    <span className="text-[7px] bg-slate-800 px-2 py-0.5 rounded font-black">EXPERT GUIDANCE</span>
+                 </label>
+                 
+                 <div className="grid gap-3">
+                    <div className="relative group">
+                       <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[14px] opacity-40">🎣</span>
+                       <input 
+                          value={route.gearIncluded} 
+                          onChange={e => setRoute({...route, gearIncluded: e.target.value})} 
+                          placeholder="建议杆轮：如 禧玛诺电绞 / 2000型以上" 
+                          className="w-full bg-slate-950 border border-slate-800 rounded-xl py-3.5 pl-12 pr-4 text-[11px] text-white outline-none focus:border-orange-500/50 transition-all shadow-inner" 
+                       />
+                    </div>
+                    <div className="relative group">
+                       <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[14px] opacity-40">🧵</span>
+                       <input 
+                          value={route.fishingSet} 
+                          onChange={e => setRoute({...route, fishingSet: e.target.value})} 
+                          placeholder="建议线组：如 PE 6-8号 / 300g铁板" 
+                          className="w-full bg-slate-950 border border-slate-800 rounded-xl py-3.5 pl-12 pr-4 text-[11px] text-white outline-none focus:border-orange-500/50 transition-all shadow-inner" 
+                       />
+                    </div>
+                    <div className="relative group">
+                       <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[14px] opacity-40">🧊</span>
+                       <input 
+                          value={route.baitIncluded} 
+                          onChange={e => setRoute({...route, baitIncluded: e.target.value})} 
+                          placeholder="建议鱼饵：如 活南极虾 / 夜光假饵" 
+                          className="w-full bg-slate-950 border border-slate-800 rounded-xl py-3.5 pl-12 pr-4 text-[11px] text-white outline-none focus:border-orange-500/50 transition-all shadow-inner" 
+                       />
+                    </div>
+                    <div className="relative group">
+                       <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[14px] opacity-40">🎒</span>
+                       <input 
+                          value={route.otherItems} 
+                          onChange={e => setRoute({...route, otherItems: e.target.value})} 
+                          placeholder="自备建议：如 晕船贴、救生衣、防水服" 
+                          className="w-full bg-slate-950 border border-slate-800 rounded-xl py-3.5 pl-12 pr-4 text-[11px] text-white outline-none focus:border-orange-500/50 transition-all shadow-inner" 
+                       />
+                    </div>
+                 </div>
               </div>
-              <div className="space-y-2">
-                <label className="text-[9px] text-slate-700 font-black uppercase ml-1 italic tracking-widest leading-none">建议鱼饵/拟饵</label>
-                <input 
-                  value={route.baitIncluded} 
-                  onChange={e => setRoute({...route, baitIncluded: e.target.value})} 
-                  placeholder="如：活虾、南极虾、夜光假饵..." 
-                  className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-[11px] text-slate-300 outline-none focus:border-blue-500/50" 
-                />
+
+              {/* 3. 路线亮点备注 (Highlights) - 第三位置，作为补充内容 */}
+              <div className="relative z-10 pt-8 border-t border-slate-800/50 space-y-4">
+                 <label className="text-[9px] text-slate-500 font-black uppercase tracking-widest italic leading-none flex items-center">
+                    <span className="w-1.5 h-1.5 bg-indigo-500 rounded-full mr-2 shadow-[0_0_8px_rgba(99,102,241,0.6)]"></span>
+                    路线亮点备注 / Trip Highlights
+                 </label>
+                 <textarea 
+                    value={route.description}
+                    onChange={e => setRoute({...route, description: e.target.value})}
+                    placeholder="描述此航线的独特魅力，吸引钓友下单..."
+                    className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-xs font-bold text-slate-300 outline-none focus:border-blue-500 min-h-[140px] resize-none shadow-inner leading-relaxed"
+                 />
               </div>
-            </div>
-          </div>
+           </div>
         </section>
-
-        <div className="py-12 text-center opacity-30">
-          <p className="text-[8px] text-slate-700 font-black uppercase tracking-[0.4em] italic leading-relaxed">系统将根据钓点和鱼种自动生成方案名称<br/>提升钓友搜索与选择效率</p>
-        </div>
       </div>
 
-      {/* 底部悬浮发布按钮 */}
-      <div className="fixed bottom-0 left-0 right-0 max-w-[390px] mx-auto p-8 pt-4 pb-14 bg-slate-900/95 backdrop-blur-2xl border-t border-slate-800 z-50 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
-         <button 
-           onClick={handleSave}
-           className="w-full bg-blue-600 hover:bg-blue-500 text-white font-black py-5 rounded-[24px] shadow-2xl shadow-blue-900/40 active:scale-95 transition-all text-sm uppercase tracking-[0.2em] italic"
-         >
-           完成并同步方案库
+      {/* Footer Action */}
+      <div className="fixed bottom-0 left-0 right-0 max-w-[390px] mx-auto p-8 pt-4 pb-14 bg-slate-900/95 backdrop-blur-2xl border-t border-slate-800 z-50">
+         <button onClick={handleSave} className="w-full bg-blue-600 hover:bg-blue-500 text-white font-black py-5 rounded-[24px] shadow-2xl shadow-blue-900/40 active:scale-95 transition-all text-sm uppercase tracking-widest italic">
+           保存方案并同步库 (SYNC)
          </button>
       </div>
 
-      {/* 船只选择弹窗 (同前逻辑) */}
+      {/* Boat Picker Modal */}
       {showBoatPicker && (
         <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/90 backdrop-blur-sm animate-in fade-in duration-300">
-           <div className="fixed inset-0" onClick={() => setShowBoatPicker(false)}></div>
-           <div className="w-full max-w-[390px] bg-slate-950 rounded-t-[40px] p-8 border-t border-slate-800 shadow-2xl animate-in slide-in-from-bottom-20 max-h-[85vh] flex flex-col relative z-10">
-              <div className="w-12 h-1 bg-slate-800 rounded-full mx-auto mb-8 shrink-0"></div>
-              
-              <div className="mb-6 shrink-0 text-center">
-                 <h3 className="text-lg font-black text-white italic tracking-tighter uppercase">选择 <span className="text-blue-400">执行船只</span></h3>
-              </div>
-              
-              <div className="flex-1 overflow-y-auto no-scrollbar pr-2 space-y-4 pb-10">
-                 {MOCK_BOATS.map(boat => (
-                    <button 
-                      key={boat.id}
-                      onClick={() => handleSelectBoat(boat)}
-                      className={`w-full bg-slate-900 border rounded-[28px] p-5 text-left active:scale-[0.98] transition-all group relative overflow-hidden ${
-                        selectedBoat.id === boat.id ? 'border-blue-500' : 'border-slate-800'
-                      }`}
-                    >
-                       <div className="flex items-center space-x-4">
-                          <div className="w-20 h-16 rounded-xl overflow-hidden bg-slate-800 shrink-0 border border-slate-800">
-                             <img src={boat.image} className="w-full h-full object-cover" alt={boat.name} />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                             <div className="flex justify-between items-start">
-                                <h4 className="text-sm font-black text-white italic truncate pr-2">{boat.name}</h4>
-                                <div className="text-right shrink-0">
-                                   <p className="text-[10px] text-emerald-400 font-black italic font-mono leading-none">¥{boat.refSharePrice}</p>
-                                   <p className="text-[7px] text-slate-600 font-bold uppercase mt-0.5 tracking-tighter">参考价</p>
-                                </div>
-                             </div>
-                             <p className="text-[9px] text-slate-500 font-bold uppercase tracking-tighter mt-1 italic">{boat.specs}</p>
-                          </div>
-                       </div>
-                    </button>
-                 ))}
-              </div>
-
-              <button 
-                onClick={() => setShowBoatPicker(false)}
-                className="w-full py-5 text-slate-500 text-[10px] font-black uppercase tracking-widest hover:text-white transition-colors border border-slate-800 rounded-[24px] shrink-0 mb-4 italic"
-              >
-                取消 (CANCEL)
-              </button>
-           </div>
+          <div className="fixed inset-0" onClick={() => setShowBoatPicker(false)}></div>
+          <div className="w-full max-w-[390px] bg-slate-950 rounded-t-[40px] p-8 border-t border-slate-800 shadow-2xl animate-in slide-in-from-bottom-20 max-h-[70vh] flex flex-col relative z-10">
+            <div className="w-12 h-1 bg-slate-800 rounded-full mx-auto mb-8 shrink-0"></div>
+            <h3 className="text-lg font-black text-white italic tracking-tighter uppercase mb-6 text-center">选择执航船只</h3>
+            <div className="flex-1 overflow-y-auto no-scrollbar space-y-4 pb-10">
+               {MOCK_BOATS.map(boat => (
+                 <button 
+                   key={boat.id}
+                   onClick={() => { setActiveBoat(boat); setShowBoatPicker(false); }}
+                   className={`w-full bg-slate-900 border p-5 rounded-[28px] flex items-center space-x-4 transition-all group ${activeBoat.id === boat.id ? 'border-blue-500 bg-blue-500/5' : 'border-slate-800'}`}
+                 >
+                   <div className="w-20 h-16 rounded-xl overflow-hidden bg-slate-800 shrink-0">
+                      <img src={boat.image} className="w-full h-full object-cover" />
+                   </div>
+                   <div className="text-left flex-1 min-w-0">
+                     <p className="text-sm font-black text-white italic truncate">{boat.name}</p>
+                     <p className="text-[9px] text-slate-500 font-bold uppercase tracking-tighter mt-1">{boat.specs}</p>
+                   </div>
+                 </button>
+               ))}
+            </div>
+            <button onClick={() => setShowBoatPicker(false)} className="w-full py-5 text-slate-500 text-xs font-black uppercase tracking-widest border border-slate-800 rounded-[24px] italic mt-4">取消</button>
+          </div>
         </div>
       )}
     </div>

@@ -219,8 +219,8 @@ const App: React.FC = () => {
             }
             
             bids.forEach((bid, index) => {
-              // 极速竞价优化：首单 0.8s，后续每 1.5-2.5s 一个
-              const delay = index === 0 ? 800 : (index * 2000) + Math.random() * 1000;
+              // 极速体验优化：首单 300ms 几乎秒回，后续每 600-1000ms 一个
+              const delay = index === 0 ? 300 : (index * 600) + Math.random() * 400;
               setTimeout(() => {
                 setActiveBids(prev => {
                   const newBids = [...prev, bid];

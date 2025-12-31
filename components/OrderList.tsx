@@ -59,11 +59,11 @@ const OrderList: React.FC<Props> = ({ orders, onSelect, onBack }) => {
     e.currentTarget.src = STATIC_ASSETS.FALLBACK_IMAGE;
   };
 
-  // 统一标题合成逻辑
+  // 统一标题合成逻辑：去掉末尾的“线”
   const getOrderDisplayTitle = (order: Trip) => {
     const info = order.bid.routeInfo;
     if (info?.destination && info?.targetFish) {
-      return `${info.destination}钓${info.targetFish}线`;
+      return `${info.destination}钓${info.targetFish}`;
     }
     if (info?.name && info.name.length < 20) return info.name;
     return order.request.style || "定制海钓";

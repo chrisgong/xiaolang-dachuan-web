@@ -41,9 +41,9 @@ const CaptainRoutes: React.FC<Props> = ({ routes, onAdd, onEdit, onBack }) => {
 
       <div className="flex-1 overflow-y-auto p-4 space-y-4 no-scrollbar pb-32">
         {routes.map(route => {
-          // 动态合成标题逻辑
+          // 动态合成标题逻辑：去掉末尾的“线”
           const displayTitle = (route.destination && route.targetFish) 
-            ? `${route.destination}钓${route.targetFish}线`
+            ? `${route.destination}钓${route.targetFish}`
             : route.name;
 
           return (

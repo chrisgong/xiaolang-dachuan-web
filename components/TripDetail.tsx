@@ -35,7 +35,7 @@ const TripDetail: React.FC<Props> = ({ trip, onFinish, onViewCaptain, onReviewSu
   const getDisplayTitle = () => {
     const info = bid.routeInfo;
     if (info?.destination && info?.targetFish) {
-      return `${info.destination}钓${info.targetFish}线`;
+      return `${info.destination}钓${info.targetFish}`;
     }
     if (info?.name && info.name.length < 20) return info.name;
     return "定制海钓行程";
