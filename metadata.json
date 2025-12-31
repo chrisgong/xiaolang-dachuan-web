@@ -1,0 +1,8 @@
+{
+  "name": "小浪打船-原型",
+  "description": "基于询价+竞单模式的即时海钓匹配平台，钓友一键发布需求，船长实时报价竞标。",
+  "requestFramePermissions": [
+    "camera",
+    "geolocation"
+  ]
+}
